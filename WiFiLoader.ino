@@ -115,5 +115,5 @@ void runAC() {
   // Вырубаем точку доступа
   WiFi.mode(WIFI_STA);
 
-  NEXT_MODE = FADE_RAINBOW;
+  NEXT_MODE = BREATHING;
 }

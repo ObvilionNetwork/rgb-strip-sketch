@@ -4,6 +4,12 @@ color rainbow_colors[3][3] = {
   { 0, 0, 255 }
 };
 
+color flare_colors[3][3] = {
+  { 255, 0, 0 },
+  { 0, 255, 0 },
+  { 0, 0, 255 }
+};
+
 void renderFromToColors(int32_t delta, color color_list[2][3], uint16_t period, byte colors[3]) {
   colors[0] = (byte) (color_list[0][0] + (color_list[1][0] - color_list[0][0]) * delta / period);
   colors[1] = (byte) (color_list[0][1] + (color_list[1][1] - color_list[0][1]) * delta / period);
@@ -36,21 +42,42 @@ byte renderFade(uint32_t delta, uint16_t period) {
   }
 }
 
+#define FLARE_MAX    256  // Коэффициент плавности
+#define FLARE_PERIOD 120 // Период обновления занчений
+void renderFlare() {
+  uint32_t delta = millis() - mode_time_flag;
+  
+  // Обновляем значение для стремления
+  if (delta > FLARE_PERIOD) {
+    mode_time_flag = millis();
+    delta = 0;
+    
+    cur_mode_flags[1] = cur_mode_flags[0];
+    cur_mode_flags[0] = random(0, FLARE_MAX);
+  }
 
-void renderCustom() {
   // Находим длительность всей анимации
   uint32_t sum = 0;
   
-  for (byte i = 0; i < config.custom_animation_colors_count; i++) {
-    sum += config.custom_animation_delays[i];
+  for (byte i = 0; i < config.flare_colors_count; i++) {
+    sum += config.flare_delays[i];
   }
 
-  // Находим промежуток времени с начала анимации
-  uint32_t delta = millis() - mode_time_flag;
-  
-  if (delta >= sum) {
-    mode_time_flag = millis();
-    delta = 0;
+  int32_t from = (int32_t) cur_mode_flags[1] * (sum / config.flare_colors_count) / 256;
+  int32_t to   = (int32_t) cur_mode_flags[0] * (sum / config.flare_colors_count) / 256;
+
+  int32_t dt = from + (to - from) * (int32_t) delta / (int32_t) FLARE_PERIOD;
+
+  renderCustomFromColors(dt, config.flare_colors_count, config.flare_delays, config.flare_colors, sum, colors);
+}
+
+void renderCustomFromColors(uint32_t delta, uint8_t count, uint16_t delays[], color colors_o[][3], uint32_t sum, color out[3]) {
+  if (!sum) {
+    // Находим длительность всей анимации
+
+    for (byte i = 0; i < count; i++) {
+      sum += delays[i];
+    }
   }
 
   // Находим цвет, на котором сейчас сидим
@@ -58,12 +85,12 @@ void renderCustom() {
   uint16_t duration = 0;
   uint8_t index, pred_index = 0;
 
-  for (uint8_t i = 0; i < config.custom_animation_colors_count; i++) {
-    if (tmp + config.custom_animation_delays[i] <= delta) {
-      tmp += config.custom_animation_delays[i];
+  for (uint8_t i = 0; i < count; i++) {
+    if (tmp + delays[i] <= delta) {
+      tmp += delays[i];
     } else {
       index = i;
-      duration = config.custom_animation_delays[i];
+      duration = delays[i];
       break;
     }
   }
@@ -74,13 +101,57 @@ void renderCustom() {
   color color_list[2][3];
   
   if (pred_index == 255) {
-    pred_index = config.custom_animation_colors_count - 1;
+    pred_index = count - 1;
   }
 
-  memcpy(color_list[0], config.custom_animation_colors[pred_index], 3);
-  memcpy(color_list[1], config.custom_animation_colors[index], 3);
+  memcpy(color_list[0], colors_o[pred_index], 3);
+  memcpy(color_list[1], colors_o[index], 3);
   
-  renderFromToColors(delta_i, color_list, duration, colors);
+  renderFromToColors(delta_i, color_list, duration, out);
+}
+
+void renderBreathing() {
+  // Находим промежуток времени с начала анимации
+  uint32_t delta = millis() - mode_time_flag;
+
+  // Находим длительность всей анимации
+  uint32_t sum = 0;
+  
+  for (byte i = 0; i < 6; i++) {
+    sum += config.breathing_delays[i];
+  }
+  
+  if (delta >= sum) {
+    mode_time_flag = millis();
+    delta = 0;
+  }
+
+  color out[3];
+
+  renderCustomFromColors(delta, 6, config.breathing_delays, config.breathing_colors, sum, out);
+
+  colors[0] = out[1] * config.breathing_color[0] / 255;
+  colors[1] = out[1] * config.breathing_color[1] / 255;
+  colors[2] = out[1] * config.breathing_color[2] / 255;
+}
+
+void renderCustom() {
+  // Находим промежуток времени с начала анимации
+  uint32_t delta = millis() - mode_time_flag;
+
+  // Находим длительность всей анимации
+  uint32_t sum = 0;
+  
+  for (byte i = 0; i < config.custom_animation_colors_count; i++) {
+    sum += config.custom_animation_delays[i];
+  }
+  
+  if (delta >= sum) {
+    mode_time_flag = millis();
+    delta = 0;
+  }
+
+  renderCustomFromColors(delta, config.custom_animation_colors_count, config.custom_animation_delays, config.custom_animation_colors, sum, colors);
 }
 
 void renderSmoothRainbow() {

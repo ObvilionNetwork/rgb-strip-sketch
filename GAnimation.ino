@@ -11,10 +11,10 @@ enum AnimationType {
   PULSE,              // +Пульсирующий один цвет
   RAINBOW,            // +Радуга с резким изменением цвета
   SMOOTH_RAINBOW,     // +Переливающаяся радуга
-  FADE_RAINBOW,       // -Перечисление цветов с эффектом затухания
+  FADE_RAINBOW,       // +Перечисление цветов с эффектом затухания
   FADING_RAINBOW,     // +Переливающаяся радуга с эффектом затухания
-  FLARE,              // Эффект огня, цвет можн настраивать
-  BREATHING,          // Эффект дыхания
+  FLARE,              // +Эффект огня, цвет можн настраивать
+  BREATHING,          // +Эффект биения сердца
   VIRTUALIZER,        // Мигание в такт музыки
   SHAKE,              // Реагирует на тряску телефона
   //LEFT_RIGHT,         // Переход цвета с ле вого колеса на правое и обратно (один цвет)
@@ -42,7 +42,7 @@ enum AnimationType {
   VOLUME_MINUS     = 221  // Плавно моргает желтым 1 раз за 4 секунды
 };
 
-byte          SYSTEM_ANIMATIONS_QSIZE;
+byte          SYSTEM_ANIMATIONS_QSIZE;    // Количество анимаций в очереди
 AnimationType SYSTEM_ANIMATIONS_QUEUE[5]; // Очередь из анимаций
 AnimationType SYSTEM_ANIMATION;           // Поверхносная анимация
 
@@ -50,17 +50,17 @@ AnimationType ANIMATION_MODE;       // Текущий режим
 AnimationType NEXT_MODE;            // Следущий режим
 uint32_t      NEXT_MODE_STARTED_AT; // Время старта перехода
 
-color colors[3];            // Текущий цвет на выход RGB лент
-color transition_colors[3]; // При переходе последний цвет копируется сюда
-boolean transition_started; // Метод инициализации режима прошел?
+color   colors[3];            // Текущий цвет на выход RGB лент
+color   transition_colors[3]; // При переходе последний цвет копируется сюда
+boolean transition_started;   // Метод инициализации режима прошел?
 
-byte cur_mode_flags[32]; // 32 байта флагов
-uint32_t sys_animation_flag;
-uint32_t mode_time_flag; // Это должен быть один из флагов массива выше, но мне лень его реализовывать
-uint32_t mode_time_flags[3];
+byte     cur_mode_flags[32]; // 32 байта для кастомных флагов
+uint32_t sys_animation_flag; // Флаг времени для системных анимаций (уведомлений)
+uint32_t mode_time_flag;     // Флаг времени для анимации, обычно используется для проверки периода
+uint32_t mode_time_flags[3]; // Дополнительные флаги времени
 
-uint32_t last_animation_tick; // Время последнего рендера анимации
-boolean animation_is_rendereing = false; //
+uint32_t last_animation_tick;     // Время последнего рендера анимации
+boolean  animation_is_rendereing; // Рендерится ли сейчас анимация?
 
 void loadAnimation() {
   if (CUR_WIFI_MODE == SSID_NOT_SPECIFIED) {
@@ -176,6 +176,10 @@ void render() {
       break;
     case FADING_RAINBOW: renderSmoothFadeRainbow();
       break;
+    case FLARE: renderFlare();
+      break;
+    case BREATHING: renderBreathing();
+      break;
     case NONE: 
       colors[0] = 0;
       colors[1] = 0;
@@ -194,19 +198,25 @@ void render() {
       memcpy(transition_colors, colors, 3);
       NEXT_MODE_STARTED_AT = millis();
       transition_started = true;
+
+      // Ну и очищаем флаги от прошлой анимации
+      mode_time_flag = 0;
+      mode_time_flags[0] = 0;
+      mode_time_flags[1] = 0;
+      mode_time_flags[2] = 0;
     }
 
-    uint16_t i = millis() - NEXT_MODE_STARTED_AT;
+    uint16_t delta = millis() - NEXT_MODE_STARTED_AT;
 
     // Если время перехода истекло
-    if (i >= config.mode_transition_time) {
+    if (delta >= config.mode_transition_time) {
       ANIMATION_MODE = NEXT_MODE;
       NEXT_MODE = NONE;
-      i = config.mode_transition_time;
+      delta = config.mode_transition_time;
     }
 
     color result[3];
-    transition(result, transition_colors, colors, i, config.mode_transition_time);
+    transition(result, transition_colors, colors, delta, config.mode_transition_time);
 
     // Получаем цвета для рендера перехода
     memcpy(colors, result, 3);

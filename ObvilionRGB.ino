@@ -41,6 +41,10 @@ union Long2Bytes {
   long value;
   byte bytes[4];
 };
+union Float2Bytes {
+  float value;
+  byte  bytes[4];
+};
 
 ICACHE_RAM_ATTR void ISR (void) {
   timer0_write(ESP.getCycleCount() + (80000000L * 2 / 100)); 

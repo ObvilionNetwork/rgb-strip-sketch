@@ -46,8 +46,8 @@ struct Config {
   // Яркость 255 - 100%, 0 - 0%
   byte brightness = 255;
 
-  // Статичный цвет G
-  color static_rgb[3] = { 0, 255, 0 };
+  // Статичный цвет G R B
+  color static_rgb[3] = { 0, 0, 255 };
   
 
   // Цвет эффекта fade
@@ -80,6 +80,37 @@ struct Config {
 
    // Период режима плавной радуги с затемнением
   uint16_t smooth_fade_rainbow_period = 5000;
+
+  byte flare_colors_count = 5;
+
+  uint16_t flare_delays[5] = {
+    200, 700, 1000, 200, 1400
+  };
+
+  color flare_colors[5][3] = {
+    { 2, 50, 1 },
+    { 4, 101, 2 },
+    { 20, 250, 0 },
+    { 25, 254, 1 },
+    { 40, 255, 2 }
+  };
+
+  uint16_t breathing_delays[6] = {
+    550, 300, 300, 20, 140, 140
+  };
+
+  color breathing_colors[6][3] = {
+    { 0, 0, 0 },
+    { 0, 255, 0 },
+    { 0, 0, 0 },
+    { 0, 0, 0 },
+    { 0, 50, 0 },
+    { 0, 0, 0 },
+  };
+
+  color breathing_color[3] = {
+    2, 255, 22
+  };
 };
 
 // Конфиг всего контроллера
