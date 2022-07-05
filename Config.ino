@@ -12,7 +12,7 @@ struct Config {
   // Имя сети для подключения к WiFi
   char ssid[32] = "ObvilionNetwork";
   // Пароль для подключения к WiFi
-  char pass[32] = "As20042005";
+  char pass[32] = "password";
 
   // Токен доступа к Obvilion Home API
   char token[40] = "";
@@ -81,6 +81,7 @@ struct Config {
    // Период режима плавной радуги с затемнением
   uint16_t smooth_fade_rainbow_period = 5000;
 
+  // Настройки анимации огня
   byte flare_colors_count = 5;
 
   uint16_t flare_delays[5] = {
@@ -95,6 +96,7 @@ struct Config {
     { 40, 255, 2 }
   };
 
+  // Настройки анимации биения сердца
   uint16_t breathing_delays[6] = {
     550, 300, 300, 20, 140, 140
   };
