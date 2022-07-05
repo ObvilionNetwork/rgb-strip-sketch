@@ -11,15 +11,16 @@ enum AnimationType {
   PULSE,              // +Пульсирующий один цвет
   RAINBOW,            // +Радуга с резким изменением цвета
   SMOOTH_RAINBOW,     // +Переливающаяся радуга
-  FADING_RAINBOW,     // Переливающаяся радуга с эффектом затухания
-  //LEFT_RIGHT_RAINBOW, // Переход цвета с левого колеса на правое и обратно (радуга)
+  FADE_RAINBOW,       // -Перечисление цветов с эффектом затухания
+  FADING_RAINBOW,     // +Переливающаяся радуга с эффектом затухания
   FLARE,              // Эффект огня, цвет можн настраивать
   BREATHING,          // Эффект дыхания
+  VIRTUALIZER,        // Мигание в такт музыки
+  SHAKE,              // Реагирует на тряску телефона
   //LEFT_RIGHT,         // Переход цвета с ле вого колеса на правое и обратно (один цвет)
   //LEFT,               // Переход цвета налево
   //RIGHT,              // Переход цвета направо
-  VIRTUALIZER,        // Мигание в такт музыки
-  SHAKE,              // Реагирует на тряску телефона
+  //LEFT_RIGHT_RAINBOW, // Переход цвета с левого колеса на правое и обратно (радуга)
   
   // Системные анимации
   FIRST_INITIALIZATION = 255, // Переход синего в фиолетовый и обратно с периодом 4 секунды
@@ -82,9 +83,11 @@ void tickTimerAnimation() {
 }
 
 void tickLoopAnimation() {
-  animation_is_rendereing = true;
-  tickAnimation();
-  animation_is_rendereing = false;
+  if (last_animation_tick + 19 <= millis()) {
+    animation_is_rendereing = true;
+    tickAnimation();
+    animation_is_rendereing = false;
+  }
 }
 
 void tickAnimation() {
@@ -168,6 +171,8 @@ void render() {
     case RAINBOW: renderRainbow();
       break;
     case SMOOTH_RAINBOW: renderSmoothRainbow();
+      break;
+    case FADE_RAINBOW: renderFadeRainbow();
       break;
     case FADING_RAINBOW: renderSmoothFadeRainbow();
       break;

@@ -94,6 +94,35 @@ void renderSmoothRainbow() {
   renderColors(delta, rainbow_colors, 3, config.smooth_rainbow_period, colors);
 }
 
+void renderFadeRainbow() {
+  uint16_t delta = millis() - mode_time_flag;
+  
+  if (delta >= config.smooth_fade_rainbow_period) {
+    mode_time_flag = millis();
+    delta = 0;
+  }
+
+  uint16_t period = config.smooth_fade_rainbow_period / 3;
+  uint16_t dt = delta;
+  
+  uint8_t cur = 0;
+  for (uint8_t i = 1; i < 4; i++) {
+    if (delta >= period * i) {
+      cur++;
+      dt -= period;
+    }
+  }
+
+  color buf[3];
+  memcpy(buf, rainbow_colors[cur], 3);
+ 
+  int16_t br = renderFade(dt, period);
+  
+  colors[0] = buf[0] * br / 255;
+  colors[1] = buf[1] * br / 255;
+  colors[2] = buf[2] * br / 255;
+}
+
 void renderSmoothFadeRainbow() {
   uint16_t delta = millis() - mode_time_flag;
   
